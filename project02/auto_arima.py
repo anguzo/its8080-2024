@@ -23,8 +23,8 @@ y_train = train_data["demand"]
 y_test = test_data["demand"]
 
 # Exogenous inputs: temp, dwpt, and price
-exog_train = train_data[["temp", "dwpt", "price"]]
-exog_test = test_data[["temp", "dwpt", "price"]]
+exog_train = train_data[["temp"]]
+exog_test = test_data[["temp"]]
 
 # %%
 auto_arima_model = auto_arima(

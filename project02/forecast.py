@@ -22,8 +22,8 @@ test_data.set_index("time", inplace=True)
 # Target Variable and Exogenous Inputs
 y_train = train_data["demand"]
 y_test = test_data["demand"]
-exog_train = train_data[["temp", "dwpt", "price"]]
-exog_test = test_data[["temp", "dwpt", "price"]]
+exog_train = train_data[["temp"]]
+exog_test = test_data[["temp"]]
 
 # %% Rolling Forecast Setup
 horizon = 24  # 24-hour horizon
@@ -31,8 +31,8 @@ steps = len(y_test) // horizon  # Number of rolling windows
 print(f"Number of rolling forecast steps: {steps}")
 
 # Initialize lists for forecasts
-arima_forecast = []
-arima_exog_forecast = []
+sarima_forecast = []
+sarimax_forecast = []
 drift_forecast_values = []
 
 # %% Rolling Out-of-Sample Forecasting
@@ -42,18 +42,16 @@ for i in range(0, len(y_test) - horizon + 1, horizon):
     rolling_exog_test = exog_test.iloc[i : i + horizon]
     rolling_y_test = y_test.iloc[i : i + horizon]
 
-    # --- 1. ARIMA Model (No Exogenous Inputs) ---
+    # --- 1. SARIMA Model ---
     arima_model = ARIMA(order=(1, 1, 1), seasonal_order=(0, 1, 1, 24))
     arima_results = arima_model.fit(rolling_y_train)
-    arima_forecast.extend(arima_results.predict(n_periods=horizon))
+    sarima_forecast.extend(arima_results.predict(n_periods=horizon))
 
-    # --- 2. ARIMA Model with Exogenous Inputs ---
+    # --- 2. SARIMAX Model ---
     arima_exog_model = ARIMA(order=(1, 1, 1), seasonal_order=(0, 1, 1, 24))
-    arima_exog_results = arima_exog_model.fit(
-        rolling_y_train, exogenous=rolling_exog_train
-    )
-    arima_exog_forecast.extend(
-        arima_exog_results.predict(n_periods=horizon, exogenous=rolling_exog_test)
+    arima_exog_results = arima_exog_model.fit(rolling_y_train, X=rolling_exog_train)
+    sarimax_forecast.extend(
+        arima_exog_results.predict(n_periods=horizon, X=rolling_exog_test)
     )
 
     # --- 3. Drift Forecast ---
@@ -63,9 +61,9 @@ for i in range(0, len(y_test) - horizon + 1, horizon):
     )
 
 # Convert forecasts to Series
-arima_forecast = pd.Series(arima_forecast, index=y_test.index[: len(arima_forecast)])
-arima_exog_forecast = pd.Series(
-    arima_exog_forecast, index=y_test.index[: len(arima_exog_forecast)]
+sarima_forecast = pd.Series(sarima_forecast, index=y_test.index[: len(sarima_forecast)])
+sarimax_forecast = pd.Series(
+    sarimax_forecast, index=y_test.index[: len(sarimax_forecast)]
 )
 drift_forecast_series = pd.Series(
     drift_forecast_values, index=y_test.index[: len(drift_forecast_values)]
@@ -83,27 +81,25 @@ print(f"Naive Forecast MAE: {naive_mae:.4f}")
 print(f"Naive Forecast RMSE: {naive_rmse:.4f}")
 
 # %% Evaluate Forecast Performance
-mae_arima = mean_absolute_error(y_test[: len(arima_forecast)], arima_forecast)
-mae_arima_exog = mean_absolute_error(
-    y_test[: len(arima_exog_forecast)], arima_exog_forecast
-)
+mae_sarima = mean_absolute_error(y_test[: len(sarima_forecast)], sarima_forecast)
+mae_sarimax = mean_absolute_error(y_test[: len(sarimax_forecast)], sarimax_forecast)
 mae_drift = mean_absolute_error(
     y_test[: len(drift_forecast_series)], drift_forecast_series
 )
 
 print("\n--- Forecast Performance ---")
-print(f"MAE (ARIMA): {mae_arima:.4f}")
-print(f"MAE (ARIMA with Exogenous Inputs): {mae_arima_exog:.4f}")
+print(f"MAE (SARIMA): {mae_sarima:.4f}")
+print(f"MAE (SARIMAX): {mae_sarimax:.4f}")
 print(f"MAE (Drift Forecast): {mae_drift:.4f}")
 print(f"MAE (Naive Forecast): {naive_mae:.4f}")
 
 # %% Visualize Forecasts
 plt.figure(figsize=(15, 8))
 plt.plot(y_test, label="Actual Demand", color="blue")
-plt.plot(arima_forecast, label="ARIMA Forecast (No Exog)", linestyle="--", color="red")
+plt.plot(sarima_forecast, label="SARIMA Forecast", linestyle="--", color="red")
 plt.plot(
-    arima_exog_forecast,
-    label="ARIMA Forecast (With Exog)",
+    sarimax_forecast,
+    label="SARIMAX Forecast",
     linestyle="--",
     color="green",
 )
@@ -119,18 +115,20 @@ plt.show()
 
 # %% Final Comparison of All Models
 print("\n--- Final Model Comparison ---")
-print(f"MAE (ARIMA): {mae_arima:.4f}")
-print(f"MAE (ARIMA with Exogenous Inputs): {mae_arima_exog:.4f}")
+print(f"MAE (SARIMA): {mae_sarima:.4f}")
+print(f"MAE (SARIMAX): {mae_sarimax:.4f}")
 print(f"MAE (Drift Forecast): {mae_drift:.4f}")
 print(f"MAE (Naive Forecast): {naive_mae:.4f}")
 
 # Determine the best-performing model
 mae_dict = {
-    "ARIMA": mae_arima,
-    "ARIMA with Exogenous Inputs": mae_arima_exog,
+    "SARIMA": mae_sarima,
+    "SARIMAX": mae_sarimax,
     "Drift Forecast": mae_drift,
     "Naive Forecast": naive_mae,
 }
 
 best_model = min(mae_dict, key=mae_dict.get)
 print(f"\nThe best-performing model is: {best_model}")
+
+# %%

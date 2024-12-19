@@ -333,9 +333,6 @@ train_data_copy["hour"] = train_data_copy.index.hour
 train_data_copy["dayofweek"] = train_data_copy.index.dayofweek
 train_data_copy["month"] = train_data_copy.index.month
 
-train_data_copy["hourly_price_interaction"] = (
-    train_data_copy["hour"] * train_data_copy["price"]
-)
 
 # Drop NaN Rows Created by Lags and Rolling Features
 train_data_copy = train_data_copy.dropna()
@@ -379,8 +376,39 @@ train_data_w_feat["temp_pres_ratio"] = train_data_w_feat["temp"] / (
     train_data_w_feat["pres"] + 1e-6
 )
 
+train_data_w_feat["hour"] = train_data_w_feat.index.hour
+train_data_w_feat["dayofweek"] = train_data_w_feat.index.dayofweek
+train_data_w_feat["month"] = train_data_w_feat.index.month
+
 # Drop NaN Rows Created by Lag and Rolling Features
 train_data_w_feat = train_data_w_feat.dropna()
 
 # Save the final data with the best new features
-# train_data_w_feat.to_csv("data/train_data_w_feat.csv", index=True)
+train_data_w_feat.to_csv("data/train_data_w_feat.csv", index=True)
+
+test_data_w_feat = test_data.copy()
+
+# Yeo-Johnson Transformation for price
+test_data_w_feat["price_yeojohnson"], _ = yeojohnson(test_data_w_feat["price"])
+
+# Sin-Cos transformation for wind direction (wdir)
+test_data_w_feat["wdir_sin"] = np.sin(np.deg2rad(test_data_w_feat["wdir"]))
+test_data_w_feat["wdir_cos"] = np.cos(np.deg2rad(test_data_w_feat["wdir"]))
+
+# Interaction Features
+test_data_w_feat["temp_rhum_interaction"] = (
+    test_data_w_feat["temp"] * test_data_w_feat["rhum"]
+)
+test_data_w_feat["temp_pres_ratio"] = test_data_w_feat["temp"] / (
+    test_data_w_feat["pres"] + 1e-6
+)
+
+test_data_w_feat["hour"] = test_data_w_feat.index.hour
+test_data_w_feat["dayofweek"] = test_data_w_feat.index.dayofweek
+test_data_w_feat["month"] = test_data_w_feat.index.month
+
+# Drop NaN Rows Created by Lag and Rolling Features
+test_data_w_feat = test_data_w_feat.dropna()
+
+# Save the final data with the best new features
+test_data_w_feat.to_csv("data/test_data_w_feat.csv", index=True)

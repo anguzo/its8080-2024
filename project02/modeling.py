@@ -25,8 +25,8 @@ y_train = train_data["demand"]
 y_test = test_data["demand"]
 
 # Exogenous inputs: temp, dwpt, and price
-exog_train = train_data[["temp", "dwpt", "price"]]
-exog_test = test_data[["temp", "dwpt", "price"]]
+exog_train = train_data[["temp"]]
+exog_test = test_data[["temp"]]
 
 # %% Plot demand over time
 plt.figure(figsize=(12, 6))
@@ -85,8 +85,8 @@ plt.show()
 plot_pacf(y_train_diff, title="PACF of Differenced Demand")
 plt.show()
 
-# %% ARIMA without exogenous inputs
-print("\n--- ARIMA Model without Exogenous Inputs ---")
+# %% SARIMA
+print("\n--- SARIMA Model ---")
 arima_model = ARIMA(order=(1, 1, 1), seasonal_order=(0, 1, 1, 24))
 arima_results = arima_model.fit(y_train)
 
@@ -97,21 +97,21 @@ forecast_no_exog, confint_no_exog = arima_results.predict(
 
 # Evaluate performance
 mae_no_exog = mean_absolute_error(y_test, forecast_no_exog)
-print(f"MAE (ARIMA without exogenous inputs): {mae_no_exog}")
+print(f"MAE (SARIMA ): {mae_no_exog}")
 
-# %% ARIMA with exogenous inputs
-print("\n--- ARIMA Model with Exogenous Inputs ---")
+# %% SARIMAX
+print("\n--- SARIMAX Model ---")
 arima_exog_model = ARIMA(order=(1, 1, 1), seasonal_order=(0, 1, 1, 24))
-arima_exog_results = arima_exog_model.fit(y_train, exogenous=exog_train)
+arima_exog_results = arima_exog_model.fit(y_train, X=exog_train)
 
 # Forecast on test set with exogenous inputs
 forecast_exog, confint_exog = arima_exog_results.predict(
-    n_periods=len(y_test), exogenous=exog_test, return_conf_int=True
+    n_periods=len(y_test), X=exog_test, return_conf_int=True
 )
 
 # Evaluate performance
 mae_exog = mean_absolute_error(y_test, forecast_exog)
-print(f"MAE (ARIMA with exogenous inputs): {mae_exog}")
+print(f"MAE (SARIMAX): {mae_exog}")
 
 # %% Visualization: Compare forecasts
 plt.figure(figsize=(15, 7))
@@ -119,14 +119,14 @@ plt.plot(y_test.index, y_test, label="Actual Demand", color="blue")
 plt.plot(
     y_test.index,
     forecast_no_exog,
-    label="ARIMA Forecast (No Exog)",
+    label="SARIMA Forecast",
     linestyle="--",
     color="red",
 )
 plt.plot(
     y_test.index,
     forecast_exog,
-    label="ARIMA Forecast (With Exog)",
+    label="SARIMAX Forecast",
     linestyle="--",
     color="green",
 )
@@ -136,7 +136,7 @@ plt.fill_between(
     y_test.index, confint_exog[:, 0], confint_exog[:, 1], color="grey", alpha=0.3
 )
 
-plt.title("ARIMA Forecasts: With and Without Exogenous Inputs")
+plt.title("SARIMA and SARIMAX Forecasts")
 plt.xlabel("Time")
 plt.ylabel("Demand")
 plt.legend()
@@ -145,18 +145,15 @@ plt.show()
 
 # %% Final Comparison of Models
 print("\n--- Final Model Comparison ---")
-print(f"MAE (ARIMA without exogenous inputs): {mae_no_exog:.4f}")
-print(f"MAE (ARIMA with exogenous inputs): {mae_exog:.4f}")
+print(f"MAE (SARIMA): {mae_no_exog:.4f}")
+print(f"MAE (SARIMAX): {mae_exog:.4f}")
 
 if mae_exog == mae_no_exog:
-    print("\nThe ARIMA models perform equally.")
+    print("\nThe SARIMA models perform equally.")
 elif mae_exog < mae_no_exog:
-    print("\nThe ARIMA model with exogenous inputs performs better.")
+    print("\nThe SARIMAX model performs better.")
 else:
-    print("\nThe ARIMA model without exogenous inputs performs better.")
+    print("\nThe SARIMA model performs better.")
 
-print(
-    "Both ARIMA models perform equally (MAE: 0.336) because the exogenous inputs add no additional predictive value beyond the autoregressive components."
-)
-
+print("SARIMAX model perform better with temp feautre (MAE: 0.3309).")
 # %%
