@@ -35,7 +35,7 @@ plt.plot(y_test, label="Demand", linestyle="--")
 plt.legend()
 plt.title("Demand Over Time")
 plt.xlabel("Time")
-plt.ylabel("Demand")
+plt.ylabel("Demand [kWh]")
 plt.show()
 
 # %% Zoom in on last part of demand over time
@@ -45,7 +45,7 @@ plt.plot(y_test, label="Test Demand", linestyle="--")
 plt.legend()
 plt.title("Zoomed-In Demand Over Time")
 plt.xlabel("Time")
-plt.ylabel("Demand")
+plt.ylabel("Demand [kWh]")
 plt.show()
 
 # %% ACF and PACF plots
@@ -138,7 +138,7 @@ plt.fill_between(
 
 plt.title("SARIMA and SARIMAX Forecasts")
 plt.xlabel("Time")
-plt.ylabel("Demand")
+plt.ylabel("Demand [kWh]")
 plt.legend()
 plt.grid()
 plt.show()

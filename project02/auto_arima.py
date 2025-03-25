@@ -58,7 +58,7 @@ plt.plot(exo_auto_arima_forecast, label="Exogenous Auto ARIMA Forecast")
 plt.legend()
 plt.title("Auto ARIMA vs. Exogenous Auto ARIMA Forecast")
 plt.xlabel("Time")
-plt.ylabel("Demand")
+plt.ylabel("Demand [kWh]")
 plt.show()
 
 # %%
